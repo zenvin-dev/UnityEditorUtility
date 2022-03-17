@@ -19,17 +19,7 @@ namespace Zenvin.EditorUtility {
 				return;
 			}
 
-			// get path to array property
-			string[] pathParts = property.propertyPath.Split ('/');
-			string path = "";
-			for (int i = 0; i < pathParts.Length - 1; i++) {
-				path = path + pathParts[i];
-			}
-			path = path + "/" + attr.ArrayProperty;
-			path = path.Trim ('/');
-
-			// find array property
-			SerializedProperty arrProp = property.serializedObject.FindProperty (path);
+			SerializedProperty arrProp = property.FindSiblingProperty (attr.ArrayProperty);
 
 			// draw original property if array property wasn't found
 			if (arrProp == null) {
