@@ -1,6 +1,6 @@
 {
     "name": "com.zenvin.unity-editor-utility",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "displayName": "Unity Editor Utility",
     "description": "Property drawers, attributes and other utility to make working in the editor more convenient.",
     "unity": "2018.3",
