@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Zenvin.EditorUtility {
+namespace Zenvin.EditorUtil {
 	[CustomPropertyDrawer (typeof (UniqueAttribute))]
 	public class UniquePropertyDrawer : PropertyDrawer {
 

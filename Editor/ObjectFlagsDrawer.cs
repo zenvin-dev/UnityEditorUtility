@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Zenvin.EditorUtility {
+namespace Zenvin.EditorUtil {
 	[CustomPropertyDrawer (typeof (ObjectFlagsAttribute))]
 	public class ObjectFlagsDrawer : PropertyDrawer {
 

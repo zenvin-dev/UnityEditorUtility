@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Zenvin.EditorUtility {
+namespace Zenvin.EditorUtil {
 	public static class Utility {
 
 		private static readonly char[] Separators = new char[] { '/' };

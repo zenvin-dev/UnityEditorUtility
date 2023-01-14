@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Zenvin.EditorUtility {
+namespace Zenvin.EditorUtil {
 	public class ArrayRangeAttribute : PropertyAttribute {
 
 		public readonly string ArrayProperty;

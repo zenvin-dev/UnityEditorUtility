@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace Zenvin.EditorUtility {
+namespace Zenvin.EditorUtil {
 	[CustomPropertyDrawer (typeof (ReadOnlyAttribute))]
 	public class ReadOnlyPropertyDrawer : PropertyDrawer {
 
@@ -17,30 +17,7 @@ namespace Zenvin.EditorUtility {
 
 			if (attr.HasCondition) {
 				SerializedProperty condProp = property.FindSiblingProperty (attr.ConditionProperty);
-				if (condProp != null) {
-					switch (condProp.propertyType) {
-						case SerializedPropertyType.Boolean:
-							enabled = condProp.boolValue.Equals (attr.ConditionValue);
-							break;
-						case SerializedPropertyType.Float:
-							enabled = condProp.floatValue.Equals (attr.ConditionValue);
-							break;
-						case SerializedPropertyType.String:
-							enabled = condProp.stringValue.Equals (attr.ConditionValue);
-							break;
-						case SerializedPropertyType.Integer:
-							enabled = condProp.intValue.Equals (attr.ConditionValue);
-							break;
-						case SerializedPropertyType.Enum:
-							enabled = condProp.enumValueIndex.Equals (attr.ConditionValue);
-							break;
-						case SerializedPropertyType.Character:
-							if (condProp.stringValue.Length > 0) {
-								enabled = condProp.stringValue[0].Equals (attr.ConditionValue);
-							}
-							break;
-					}
-				}
+				enabled = condProp.CompareValue (attr.ConditionValue);
 			}
 
 			if (attr.InvertCondition) {

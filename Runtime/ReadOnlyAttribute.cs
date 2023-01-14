@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Zenvin.EditorUtility {
+namespace Zenvin.EditorUtil {
 	public class ReadOnlyAttribute : PropertyAttribute {
 
 		public readonly bool HasCondition = false;

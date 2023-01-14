@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace Zenvin.EditorUtility {
+namespace Zenvin.EditorUtil {
 	public class UniqueModalDialog : EditorWindow {
 
 		private SerializedProperty prop;

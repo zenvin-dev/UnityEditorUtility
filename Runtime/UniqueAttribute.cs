@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Zenvin.EditorUtility {
+namespace Zenvin.EditorUtil {
 	/// <summary>
 	/// Declares a serialized field as unique.<br></br>
 	/// If the field is given a value that already exists on another object, the user will be prompted to enter a different value.
