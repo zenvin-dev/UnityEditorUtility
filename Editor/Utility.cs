@@ -145,5 +145,12 @@ namespace Zenvin.EditorUtil {
 			return false;
 		}
 
+		public static Texture2D GetColorTexture (Color color) {
+			Texture2D tex = new Texture2D (1, 1);
+			tex.SetPixel (0, 0, color);
+			tex.Apply ();
+			return tex;
+		}
+
 	}
 }
