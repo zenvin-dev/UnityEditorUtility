@@ -19,18 +19,18 @@ namespace Zenvin.EditorUtil {
 			string content = $"{(property.objectReferenceValue == null ? $"None" : property.objectReferenceValue.name)} ({fieldInfo.FieldType.Name})";
 			Rect fieldRect = EditorGUI.PrefixLabel (position, label);
 			if (GUI.Button (fieldRect, content, EditorStyles.popup)) {
-				OpenDropdown (fieldRect, property);
+				OpenDropdown (fieldRect, property, (attribute as ObjectDropdownAttribute).AllowSubAssets);
 			}
 		}
 
-		private void OpenDropdown (Rect rect, SerializedProperty property) {
+		private void OpenDropdown (Rect rect, SerializedProperty property, bool allowSubAssets) {
 			UObject[] allObjects = Utility.FindAll (fieldInfo.FieldType);
 
 			GenericMenu menu = new GenericMenu ();
 			menu.allowDuplicateNames = true;
 			menu.AddItem (new GUIContent ("None"), property.objectReferenceValue == null, OnSelectOption, new EntryData (property, null));
 			for (int i = 0; i < allObjects.Length; i++) {
-				if (allObjects[i] is ScriptableObject so) {
+				if (allObjects[i] is ScriptableObject so && (AssetDatabase.IsMainAsset (so) || allowSubAssets)) {
 					menu.AddItem (new GUIContent (so.name), property.objectReferenceValue == so, OnSelectOption, new EntryData (property, so));
 				}
 			}
