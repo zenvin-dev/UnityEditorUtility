@@ -97,7 +97,13 @@ namespace Zenvin.EditorUtil.Sidebar {
 		}
 
 		public override void DrawTooltip (Rect sidebarPosition) {
-			if (ActiveTooltip == null) {
+			if (ActiveTooltip == null || UseNativeTooltips == ButtonType.All) {
+				return;
+			}
+			if (UseNativeTooltips == ButtonType.Action && !ActiveTooltip.TabTarget) {
+				return;
+			}
+			if (UseNativeTooltips == ButtonType.Tab && ActiveTooltip.TabTarget) {
 				return;
 			}
 
@@ -124,11 +130,15 @@ namespace Zenvin.EditorUtil.Sidebar {
 
 		private void DrawTab (Rect position, int i, Event e) {
 			SidebarButton btn = tabs[i];
-			GUIContent btnCont = new GUIContent (btn.Icon ?? FallbackIcon);
-			GUIStyle stl = SelectedTab == i ? ButtonStyleActive : ButtonStyle;
+			GUIContent btnCont = new GUIContent (btn.Icon ?? FallbackIcon, (UseNativeTooltips == ButtonType.All || UseNativeTooltips == ButtonType.Tab) ? btn.Label : null);
 
 			Rect btnRect = GUILayoutUtility.GetRect (position.width, position.width);
-			if (GUI.Button (btnRect, btnCont, stl)) {
+			bool mouseHover = btnRect.Contains (e.mousePosition);
+
+			EditorGUI.DrawRect (btnRect, SelectedTab == i ? UnityColors.SelectionActiveColor : (mouseHover ? UnityColors.SelectionInactiveColor : Color.clear));
+			if (GUI.Button (btnRect, btnCont, ButtonStyle)) {
+				GUI.FocusControl (null);
+
 				if (i != SelectedTab) {
 					callbacks?.TabChanged (this, i, SelectedTab);
 					SelectedTab = i;
@@ -138,24 +148,29 @@ namespace Zenvin.EditorUtil.Sidebar {
 				}
 			}
 
-			if (btnRect.Contains (e.mousePosition)) {
-				ActiveTooltip = new TooltipContent (btnRect, btn.Label);
+			if (mouseHover) {
+				ActiveTooltip = new TooltipContent (btnRect, btn.Label, true);
 			}
 		}
 
 		private void DrawButton (Rect position, int i, Event e) {
 			SidebarButton btn = buttons[i];
-			GUIContent btnCont = new GUIContent (btn.Icon ?? FallbackIcon);
+			GUIContent btnCont = new GUIContent (btn.Icon ?? FallbackIcon, (UseNativeTooltips == ButtonType.All || UseNativeTooltips == ButtonType.Action) ? btn.Label : null);
 			Rect btnRect = GUILayoutUtility.GetRect (position.width, position.width);
+			bool mouseHover = btnRect.Contains (e.mousePosition);
 
 			EditorGUI.BeginDisabledGroup (callbacks != null && !callbacks.ButtonEnabled (this, i));
+			if (mouseHover && GUI.enabled) {
+				EditorGUI.DrawRect (btnRect, UnityColors.SelectionInactiveColor);
+			}
 			if (GUI.Button (btnRect, btnCont, ButtonStyle)) {
+				GUI.FocusControl (null);
 				callbacks?.ButtonClicked (this, i);
 			}
 			EditorGUI.EndDisabledGroup ();
 
-			if (btnRect.Contains (e.mousePosition)) {
-				ActiveTooltip = new TooltipContent (btnRect, btn.Label);
+			if (mouseHover) {
+				ActiveTooltip = new TooltipContent (btnRect, btn.Label, false);
 			}
 		}
 

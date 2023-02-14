@@ -5,6 +5,13 @@ using UnityEngine;
 namespace Zenvin.EditorUtil.Sidebar {
 	public abstract class ButtonBar {
 
+		public enum ButtonType {
+			None,
+			Tab,
+			Action,
+			All
+		}
+
 		protected const int ButtonPadding = 5;
 		protected const int ButtonSpacing = 0;
 		protected const int SeparatorSpacing = 2;
@@ -18,7 +25,6 @@ namespace Zenvin.EditorUtil.Sidebar {
 					buttonStyle = new GUIStyle (EditorStyles.label);
 					buttonStyle.margin = new RectOffset ();
 					buttonStyle.padding = new RectOffset (ButtonPadding, ButtonPadding, ButtonPadding, ButtonPadding);
-					buttonStyle.hover.background = Utility.GetColorTexture (UnityColors.SelectionInactiveColor);
 				}
 				return buttonStyle;
 			}
@@ -57,6 +63,7 @@ namespace Zenvin.EditorUtil.Sidebar {
 		protected readonly List<SidebarButton> tabs = new List<SidebarButton> ();
 		protected readonly List<SidebarButton> buttons = new List<SidebarButton> ();
 
+		public ButtonType UseNativeTooltips { get; set; }
 		protected TooltipContent ActiveTooltip { get; set; }
 
 
@@ -68,7 +75,7 @@ namespace Zenvin.EditorUtil.Sidebar {
 		public abstract void DrawTooltip (Rect sidebarPosition);
 
 
-		protected class SidebarButton {
+		public class SidebarButton {
 			public readonly string Label;
 			public readonly Texture2D Icon;
 
@@ -79,10 +86,12 @@ namespace Zenvin.EditorUtil.Sidebar {
 		}
 
 		protected class TooltipContent {
+			public readonly bool TabTarget;
 			public readonly Rect TargetPosition;
 			public readonly string Label;
 
-			public TooltipContent (Rect position, string label) {
+			public TooltipContent (Rect position, string label, bool tabTarget) {
+				TabTarget = tabTarget;
 				TargetPosition = position;
 				Label = label;
 			}
