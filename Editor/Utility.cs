@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -48,6 +49,26 @@ namespace Zenvin.EditorUtil {
 			}
 
 			return current;
+		}
+
+		public static object GetTarget (this SerializedProperty prop) {
+			object targetObj = prop.serializedObject.targetObject;
+			var path = prop.propertyPath.Replace (".Array.data[", "[");
+			var elements = path.Split ('.');
+			foreach (var element in elements) {
+				if (element.Contains ("[")) {
+					var elementName = element.Substring (0, element.IndexOf ("["));
+					var index = int.Parse (element.Substring (element.IndexOf ("[")).Replace ("[", "").Replace ("]", ""));
+					targetObj = GetReflectedValue (targetObj, elementName, index);
+				} else {
+					targetObj = GetReflectedValue (targetObj, element);
+				}
+			}
+			return targetObj;
+		}
+
+		public static T GetTarget<T> (this SerializedProperty prop) where T : class {
+			return prop.GetTarget () as T;
 		}
 
 		public static T[] FindAll<T> () where T : ScriptableObject {
@@ -152,5 +173,41 @@ namespace Zenvin.EditorUtil {
 			return tex;
 		}
 
+
+		private static object GetReflectedValue (object source, string name) {
+			if (source == null) {
+				return null;
+			}
+			var type = source.GetType ();
+
+			while (type != null) {
+				var f = type.GetField (name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+				if (f != null) {
+					return f.GetValue (source);
+				}
+
+				var p = type.GetProperty (name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+				if (p != null) {
+					return p.GetValue (source, null);
+				}
+
+				type = type.BaseType;
+			}
+			return null;
+		}
+
+		private static object GetReflectedValue (object source, string name, int index) {
+			if (!(GetReflectedValue (source, name) is System.Collections.IEnumerable enumerable)) {
+				return null;
+			}
+			var enm = enumerable.GetEnumerator ();
+
+			for (int i = 0; i <= index; i++) {
+				if (!enm.MoveNext ()) {
+					return null;
+				}
+			}
+			return enm.Current;
+		}
 	}
 }
