@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -51,6 +52,15 @@ namespace Zenvin.EditorUtil {
 			return current;
 		}
 
+		public static bool TryGetArrayElementAtIndex (this SerializedProperty prop, int index, out SerializedProperty element) {
+			element = null;
+			if (prop == null || !prop.isArray || index < 0 || index >= prop.arraySize) {
+				return false;
+			}
+			element = prop.GetArrayElementAtIndex (index);
+			return true;
+		}
+
 		public static object GetTarget (this SerializedProperty prop) {
 			object targetObj = prop.serializedObject.targetObject;
 			var path = prop.propertyPath.Replace (".Array.data[", "[");
@@ -69,6 +79,35 @@ namespace Zenvin.EditorUtil {
 
 		public static T GetTarget<T> (this SerializedProperty prop) where T : class {
 			return prop.GetTarget () as T;
+		}
+
+		public static object GetRawValue (this SerializedProperty prop) {
+			switch (prop.propertyType) {
+				case SerializedPropertyType.Integer: return prop.intValue;
+				case SerializedPropertyType.Boolean: return prop.boolValue;
+				case SerializedPropertyType.Float: return prop.floatValue;
+				case SerializedPropertyType.String: return prop.stringValue;
+				case SerializedPropertyType.Color: return prop.colorValue;
+				case SerializedPropertyType.ObjectReference: return prop.objectReferenceValue;
+				case SerializedPropertyType.LayerMask: return prop.intValue;
+				case SerializedPropertyType.Enum: return prop.enumValueIndex;
+				case SerializedPropertyType.Vector2: return prop.vector2Value;
+				case SerializedPropertyType.Vector3: return prop.vector3Value;
+				case SerializedPropertyType.Vector4: return prop.vector4Value;
+				case SerializedPropertyType.Rect: return prop.rectValue;
+				case SerializedPropertyType.ArraySize: return prop.arraySize;
+				case SerializedPropertyType.Character: return prop.stringValue.FirstOrDefault();
+				case SerializedPropertyType.AnimationCurve: return prop.animationCurveValue;
+				case SerializedPropertyType.Bounds: return prop.boundsValue;
+				case SerializedPropertyType.Quaternion: return prop.quaternionValue;
+				case SerializedPropertyType.ExposedReference: return prop.exposedReferenceValue;
+				case SerializedPropertyType.FixedBufferSize: return prop.fixedBufferSize;
+				case SerializedPropertyType.Vector2Int: return prop.vector2IntValue;
+				case SerializedPropertyType.Vector3Int: return prop.vector3IntValue;
+				case SerializedPropertyType.RectInt: return prop.rectIntValue;
+				case SerializedPropertyType.BoundsInt: return prop.boundsIntValue;
+			}
+			return null;
 		}
 
 		public static T[] FindAll<T> () where T : ScriptableObject {
