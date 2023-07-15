@@ -1,7 +1,7 @@
 using UnityEngine;
 
-namespace Zenvin.EditorUtil.Table {
-	public interface ITableEditorCallbacks {
+namespace Zenvin.EditorUtil.GridTable {
+	public interface IGridTableEditorCallbacks {
 		int ColumnCount { get; }
 		int RowCount { get; }
 
@@ -13,7 +13,7 @@ namespace Zenvin.EditorUtil.Table {
 		void OnDrawCell (Vector2Int cell, Rect position);
 	}
 
-	public interface ITableEditorCallbacksExtended : ITableEditorCallbacks {
+	public interface IGridTableEditorCallbacksExtended : IGridTableEditorCallbacks {
 		void OnDrawCorner (Rect position);
 	}
 }

@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 
-namespace Zenvin.EditorUtil.Table {
-	public class TableEditor {
+namespace Zenvin.EditorUtil.GridTable {
+	public class GridTableEditor {
 
-		private readonly ITableEditorCallbacks callbacks;
+		private readonly IGridTableEditorCallbacks callbacks;
 
 		private const float ScrollbarSize = 13f;
 
@@ -31,7 +28,7 @@ namespace Zenvin.EditorUtil.Table {
 		public Color CellErrorTint { get; set; } = Color.red;
 
 
-		public TableEditor (ITableEditorCallbacks callbacks) {
+		public GridTableEditor (IGridTableEditorCallbacks callbacks) {
 			this.callbacks = callbacks;
 			cellSize = new Vector2 (200f, EditorGUIUtility.singleLineHeight * 2);
 			headerSize = new Vector2 (200f, EditorGUIUtility.singleLineHeight * 2);
@@ -78,7 +75,7 @@ namespace Zenvin.EditorUtil.Table {
 		}
 
 		private void DrawCorner (Event e, ref bool repaint) {
-			if (callbacks is ITableEditorCallbacksExtended ext) {
+			if (callbacks is IGridTableEditorCallbacksExtended ext) {
 				Rect cornerRect = new Rect (Vector2.zero, cellSize);
 				_ = DrawRawCell (cornerRect, Color.clear, e, ref repaint);
 				ext.OnDrawCorner (cornerRect);
