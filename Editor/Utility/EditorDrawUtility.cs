@@ -1,5 +1,7 @@
 using UnityEditor;
 using UnityEngine;
+using Zenvin.EditorUtil.Sidebar;
+using static Zenvin.EditorUtil.MathUtility;
 
 namespace Zenvin.EditorUtil {
 	public static class EditorDrawUtility {
@@ -17,9 +19,41 @@ namespace Zenvin.EditorUtil {
 			Bezier,
 		}
 
-		private static readonly Quaternion arrowAngleL = Quaternion.Euler (0f, 0f, 25f);
-		private static readonly Quaternion arrowAngleR = Quaternion.Euler (0f, 0f, -25f);
+		public enum ArrowStyle {
+			Triangle,
+			Indented,
+		}
 
+		private static readonly Quaternion arrowAngleSharpL = Quaternion.Euler (0f, 0f, 45f);
+		private static readonly Quaternion arrowAngleSharpR = Quaternion.Euler (0f, 0f, -45f);
+		private static readonly Quaternion arrowAngleL = Quaternion.Euler (0f, 0f, 60f);
+		private static readonly Quaternion arrowAngleR = Quaternion.Euler (0f, 0f, -60f);
+
+		private static GUIStyle tabButtonStyle;
+		private static GUIStyle TabButtonStyle {
+			get {
+				if (tabButtonStyle == null) {
+					tabButtonStyle = new GUIStyle (EditorStyles.label);
+					tabButtonStyle.alignment = TextAnchor.MiddleCenter;
+				}
+				return tabButtonStyle;
+			}
+		}
+
+		private static GUIStyle layoutButtonStyle;
+		private static GUIStyle LayoutButtonStyle {
+			get {
+				if (layoutButtonStyle == null) {
+					layoutButtonStyle = new GUIStyle (EditorStyles.label) {
+						margin = new RectOffset (),
+						padding = new RectOffset (),
+						alignment = TextAnchor.MiddleLeft,
+						richText = true,
+					};
+				}
+				return layoutButtonStyle;
+			}
+		}
 
 
 		public static void DrawGrid (Rect position, Vector2 offset, float spacing, float thickness, Color color) {
@@ -68,14 +102,14 @@ namespace Zenvin.EditorUtil {
 
 			switch (side) {
 				case Side.Left:
-					if (inside) {
+					if (!inside) {
 						pos.x -= thickness;
 					}
 					rect = new Rect (pos, sizeVert);
 					break;
 				case Side.Right:
 					pos.x += position.width;
-					if (!inside) {
+					if (inside) {
 						pos.x -= thickness;
 					}
 					rect = new Rect (pos, sizeVert);
@@ -98,46 +132,196 @@ namespace Zenvin.EditorUtil {
 		}
 
 		public static OrientedPoint DrawConnection (LineStyle style, Vector2 start, Vector2 startTangent, Vector2 end, Vector2 endTangent, float thickness, Color color) {
+			OrientedPoint point = new OrientedPoint ();
 			Color col = Handles.color;
 			Handles.color = color;
 
 			switch (style) {
 				case LineStyle.Direct:
-					Handles.DrawLine (start, end, thickness);
+					Handles.DrawAAPolyLine (thickness, start, end);
 					break;
 				case LineStyle.Sharp:
-					Handles.DrawLine (start, start += startTangent, thickness);
-					Handles.DrawLine (end, end += endTangent, thickness);
-					Handles.DrawLine (start, end, thickness);
+					Handles.DrawLine (start, start + startTangent, thickness);
+					Handles.DrawSolidDisc (start + startTangent, Vector3.forward, thickness * 0.5f);
+					Handles.DrawSolidDisc (end + endTangent, Vector3.forward, thickness * 0.5f);
 					break;
 				case LineStyle.Bezier:
-					Handles.DrawBezier (start, end, startTangent, endTangent, color, null, thickness);
+					Handles.DrawAAPolyLine (thickness, GetBezierPoints (start, start + startTangent, end, end + endTangent, 20));
+					point = GetOrientedBezierPoint (start, start + startTangent, end, end + endTangent, 0.5f);
 					break;
 			}
 
-			Handles.color = color;
-			return GetPointFromEnds (start, end);
+			Handles.color = col;
+			return point;
 		}
 
-		internal static void DrawConnectionArrow (OrientedPoint ctr, float size, Color color) {
+		public static void DrawConnectionArrow (OrientedPoint ctr, ArrowStyle style, float size, Color color) {
 			size *= 0.5f;
 
-			Vector3 leftFin = ctr.Position + (Vector2)(arrowAngleL * ctr.Orientation * Vector2.down) * size;
-			Vector3 rightFin = ctr.Position + (Vector2)(arrowAngleR * ctr.Orientation * Vector2.down) * size;
-			Vector3 tip = ctr.Position + (Vector2)(ctr.Orientation * Vector2.up) * size;
+			Vector3 leftFin;
+			Vector3 rightFin;
+			Vector3 tip;
 
 			var col = Handles.color;
 			Handles.color = color;
-			Handles.DrawAAConvexPolygon (ctr.Position, leftFin, tip, rightFin);
+			switch (style) {
+				case ArrowStyle.Indented:
+					leftFin = ctr.Position + (Vector2)(arrowAngleSharpL * ctr.Orientation * Vector2.left) * size;
+					rightFin = ctr.Position + (Vector2)(arrowAngleSharpR * ctr.Orientation * Vector2.left) * size;
+					tip = ctr.Position + (Vector2)(ctr.Orientation * Vector2.right) * size;
+
+					Handles.DrawAAConvexPolygon (ctr.Position, leftFin, tip, rightFin);
+					break;
+				case ArrowStyle.Triangle:
+					Quaternion rotOffset = Quaternion.Euler (0f, -90f, 0f);
+					leftFin = ctr.Position + (Vector2)(arrowAngleL * ctr.Orientation * rotOffset * Vector2.left) * size;
+					rightFin = ctr.Position + (Vector2)(arrowAngleR * ctr.Orientation * rotOffset * Vector2.left) * size;
+					tip = ctr.Position + (Vector2)(ctr.Orientation * rotOffset * Vector2.right) * size;
+
+					Handles.DrawAAConvexPolygon (leftFin, tip, rightFin);
+					break;
+			}
 			Handles.color = col;
 		}
 
-		private static OrientedPoint GetPointFromEnds (Vector2 start, Vector2 end) {
-			Vector2 dir = end - start;
-			float angle = Mathf.Atan2 (dir.y, dir.x) * Mathf.Rad2Deg;
-			return new OrientedPoint (start + dir * 0.5f, Quaternion.Euler (0f, 0f, angle));
+		public static void DrawBeveledRect (Rect rect, float bevel, int bevelResolution, Color color) {
+			bevel = Mathf.Abs (bevel);
+			bevelResolution = Mathf.Abs (bevelResolution);
+
+			var points = GetPointsOnBeveledRect (rect, bevel, bevelResolution);
+			var col = Handles.color;
+
+			Handles.color = color;
+			Handles.DrawAAConvexPolygon (points);
+			Handles.color = col;
 		}
 
+		public static void Button (Rect rect, GUIContent content, GUIStyle style, out bool button, out bool context, Event e = null) {
+			if (e == null) {
+				e = Event.current;
+			}
+			button = GUI.Button (rect, content, style);
+			context = button && (e.type == EventType.Used && (e.button == 1 || e.keyCode == KeyCode.Mouse1));
+		}
+
+		public static void Button (Rect rect, GUIContent content, bool active, out bool button, out bool context, Event e = null) {
+			if (e == null) {
+				e = Event.current;
+			}
+
+			var color = active ? UnityColors.SelectionActiveColor : (rect.Contains (e.mousePosition) ? UnityColors.ForegroundColor : Color.clear);
+			EditorGUI.DrawRect (rect, color);
+
+			button = GUI.Button (rect, content, LayoutButtonStyle);
+			context = button && (e.type == EventType.Used && (e.button == 1 || e.keyCode == KeyCode.Mouse1));
+		}
+
+		public static bool Button (Rect rect, GUIContent content, bool active, Event e = null) {
+			if (e == null) {
+				e = Event.current;
+			}
+
+			var color = active ? UnityColors.SelectionActiveColor : (rect.Contains (e.mousePosition) ? UnityColors.ForegroundColor : Color.clear);
+			EditorGUI.DrawRect (rect, color);
+			return GUI.Button (rect, content, EditorStyles.label);
+		}
+
+		public static void LayoutButton (GUIContent content, bool active, out bool button, out bool context, Event e = null, params GUILayoutOption[] options) {
+			var rect = GUILayoutUtility.GetRect (content, LayoutButtonStyle, options);
+			Button (rect, content, active, out button, out context, e);
+		}
+
+		public static bool LayoutButton (GUIContent content, bool active, Event e = null, params GUILayoutOption[] options) {
+			var rect = GUILayoutUtility.GetRect (content, LayoutButtonStyle, options);
+			return Button (rect, content, active, e);
+		}
+
+		public static void DrawLayoutTabs (ref int selectedTab, Event currentEvent, float height, bool drawSeparators, params ButtonBar.SidebarButton[] tabs) {
+			if (height <= 0 || tabs == null || tabs.Length == 0 || currentEvent == null) {
+				return;
+			}
+
+			Rect fullRect = EditorGUILayout.GetControlRect (GUILayout.Height (height));
+			fullRect.width += 9f;
+			float buttonWidth = fullRect.width / tabs.Length;
+
+			for (int i = 0; i < tabs.Length; i++) {
+				Rect rect = new Rect (buttonWidth * i, 0f, buttonWidth, height);
+				Color col = selectedTab == i ? UnityColors.SelectionActiveColor : (rect.Contains (currentEvent.mousePosition) ? UnityColors.SelectionInactiveColor : Color.clear);
+
+				EditorGUI.DrawRect (rect, col);
+				if (GUI.Button (rect, tabs[i].Label, TabButtonStyle)) {
+					selectedTab = i;
+				}
+
+				if (drawSeparators && i < tabs.Length - 1) {
+					DrawSeparator (rect, Side.Right, 1f, UnityColors.SeparatorColor, true);
+				}
+			}
+		}
+
+		public static int DrawLayoutChips (string label, bool horizontal, params string[] chips) {
+			if (chips == null || chips.Length == 0) {
+				return -1;
+			}
+
+			int index = -1;
+			if (horizontal) {
+				GUILayout.BeginHorizontal ();
+			}
+
+			if (!string.IsNullOrWhiteSpace (label)) {
+				GUILayout.Label (label, EditorStyles.boldLabel, GUILayout.ExpandWidth (false));
+			}
+
+			for (int i = 0; i < chips.Length; i++) {
+				if (GUILayout.Button (chips[i], EditorStyles.miniButton, GUILayout.ExpandWidth (false))) {
+					GUI.FocusControl (null);
+					index = i;
+				}
+			}
+
+			if (horizontal) {
+				GUILayout.EndHorizontal ();
+			}
+			return index;
+		}
+
+		public static int DrawLayoutChips (bool horizontal, params ChipContent[] chips) {
+			if (chips == null || chips.Length == 0) {
+				return -1;
+			}
+
+			int index = -1;
+			if (horizontal) {
+				GUILayout.BeginHorizontal ();
+			}
+
+			for (int i = 0; i < chips.Length; i++) {
+				var chip = chips[i];
+
+				if (i < chips.Length - 1 && chip.Separate) {
+					var separatorRect = GUILayoutUtility.GetRect (7f, EditorGUIUtility.singleLineHeight);
+					separatorRect.width = 1f;
+					separatorRect.x += 3f;
+					EditorGUI.DrawRect (separatorRect, UnityColors.SceneMajorGridColor);
+				}
+
+				if (!string.IsNullOrWhiteSpace (chip.Prefix)) {
+					GUILayout.Label (chip.Prefix, EditorStyles.boldLabel, GUILayout.ExpandWidth (false));
+				}
+
+				if (GUILayout.Button (new GUIContent(chip.Label, chip.Tooltip), EditorStyles.miniButton, GUILayout.ExpandWidth (false))) {
+					GUI.FocusControl (null);
+					index = i;
+				}
+			}
+
+			if (horizontal) {
+				GUILayout.EndHorizontal ();
+			}
+			return index;
+		}
 	}
 
 	public struct OrientedPoint {
@@ -147,6 +331,29 @@ namespace Zenvin.EditorUtil {
 		public OrientedPoint (Vector2 position, Quaternion orientation) {
 			Position = position;
 			Orientation = orientation;
+		}
+	}
+
+	public readonly struct ChipContent {
+		public readonly string Prefix;
+		public readonly string Label;
+		public readonly bool Separate;
+		public readonly string Tooltip;
+
+
+		public ChipContent (string label) : this (null, label, false, null) { }
+
+		public ChipContent (string label, string tooltip) : this (null, label, false, tooltip) { }
+
+		public ChipContent (string prefix, string label, string tooltip) : this (prefix, label, false, tooltip) { }
+
+		public ChipContent (string prefix, string label, bool separate) : this(prefix, label, separate, null) { }
+
+		public ChipContent (string prefix, string label, bool separate, string tooltip) {
+			Prefix = prefix;
+			Label = label;
+			Separate = separate;
+			Tooltip = tooltip;
 		}
 	}
 }
