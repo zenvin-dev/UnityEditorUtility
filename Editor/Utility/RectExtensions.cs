@@ -43,16 +43,16 @@ namespace Zenvin {
 		public static Rect Inset (this Rect rect, RectTransform.Edge edge, float amount, out Rect inset) {
 			switch (edge) {
 				case RectTransform.Edge.Left:
-					inset = new Rect (new Vector2(rect.x, rect.y), new Vector2(amount, rect.height));
+					inset = new Rect (new Vector2 (rect.x, rect.y), new Vector2 (amount, rect.height));
 					return rect.Inset (amount, 0, 0, 0);
 				case RectTransform.Edge.Right:
-					inset = new Rect (new Vector2(rect.x + rect.width - amount, rect.y), new Vector2(amount, rect.height));
+					inset = new Rect (new Vector2 (rect.x + rect.width - amount, rect.y), new Vector2 (amount, rect.height));
 					return rect.Inset (0, amount, 0, 0);
 				case RectTransform.Edge.Top:
-					inset = new Rect (new Vector2(rect.x, rect.y), new Vector2(rect.width, amount));
+					inset = new Rect (new Vector2 (rect.x, rect.y), new Vector2 (rect.width, amount));
 					return rect.Inset (0, 0, amount, 0);
 				case RectTransform.Edge.Bottom:
-					inset = new Rect (new Vector2(rect.x, rect.y + rect.height - amount), new Vector2(rect.width, amount));
+					inset = new Rect (new Vector2 (rect.x, rect.y + rect.height - amount), new Vector2 (rect.width, amount));
 					return rect.Inset (0, 0, 0, amount);
 			}
 			inset = new Rect ();
@@ -86,35 +86,39 @@ namespace Zenvin {
 			return parent.Inset (offset);
 		}
 
-		public static void SplitNonAlloc (this Rect original, RectTransform.Axis axis, Rect[] parts) {
+		public static bool SplitNonAlloc (this Rect original, RectTransform.Axis axis, Rect[] parts, float spacing = 0f) {
 			if (parts == null || parts.Length == 0 || original == null) {
-				return;
+				return false;
 			}
 			switch (axis) {
 				case RectTransform.Axis.Horizontal:
-					SplitHorizontal (original, parts);
-					return;
+					SplitHorizontal (original, parts, spacing);
+					return true;
 				case RectTransform.Axis.Vertical:
-					SplitVertical (original, parts);
-					break;
+					SplitVertical (original, parts, spacing);
+					return true;
+				default:
+					return true;
 			}
 		}
 
-		private static void SplitHorizontal (Rect rect, Rect[] parts) {
-			var width = rect.width / parts.Length;
+		private static void SplitHorizontal (Rect rect, Rect[] parts, float spacing) {
+			var fullSpacing = spacing * (parts.Length - 1);
+			var width = (rect.width - fullSpacing) / parts.Length;
 			var pos = 0f;
 			for (int i = 0; i < parts.Length; i++) {
 				parts[i] = new Rect (rect.position + Vector2.right * pos, new Vector2 (width, rect.height));
-				pos += width;
+				pos += width + spacing;
 			}
 		}
 
-		private static void SplitVertical (Rect rect, Rect[] parts) {
-			var height = rect.height / parts.Length;
+		private static void SplitVertical (Rect rect, Rect[] parts, float spacing) {
+			var fullSpacing = spacing * (parts.Length - 1);
+			var height = (rect.height - fullSpacing) / parts.Length;
 			var pos = 0f;
 			for (int i = 0; i < parts.Length; i++) {
 				parts[i] = new Rect (rect.position + Vector2.up * pos, new Vector2 (rect.width, height));
-				pos += height;
+				pos += height + spacing;
 			}
 		}
 
