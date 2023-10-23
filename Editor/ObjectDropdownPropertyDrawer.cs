@@ -16,11 +16,15 @@ namespace Zenvin.EditorUtil {
 				return;
 			}
 
+			label = EditorGUI.BeginProperty (position, label, property);
+
 			string content = $"{(property.objectReferenceValue == null ? $"None" : property.objectReferenceValue.name)} ({fieldInfo.FieldType.Name})";
 			Rect fieldRect = EditorGUI.PrefixLabel (position, label);
 			if (GUI.Button (fieldRect, content, EditorStyles.popup)) {
 				OpenDropdown (fieldRect, property, (attribute as ObjectDropdownAttribute).AllowSubAssets);
 			}
+
+			EditorGUI.EndProperty ();
 		}
 
 		private void OpenDropdown (Rect rect, SerializedProperty property, bool allowSubAssets) {
