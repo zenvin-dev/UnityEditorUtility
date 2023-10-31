@@ -102,6 +102,21 @@ namespace Zenvin {
 			}
 		}
 
+		/// <summary>
+		/// Returns a rect the size of <paramref name="inner"/>, with its position clamped so it stays inside <paramref name="outer"/>.<br></br>
+		/// If <paramref name="outer"/> is smaller than <paramref name="inner"/> on either axis (x or y), the position on that axis will be set to the smallest possible value.
+		/// </summary>
+		public static Rect ClampInside (this Rect inner, Rect outer) {
+			var pos = inner.position;
+
+			pos.x = outer.width <= inner.width ? outer.x : Mathf.Clamp (pos.x, outer.x, (outer.x + outer.width) - inner.width);
+			pos.y = outer.height <= inner.height ? outer.y : Mathf.Clamp (pos.y, outer.y, (outer.y + outer.height) - inner.height);
+
+			inner.position = pos;
+			return inner;
+		}
+
+
 		private static void SplitHorizontal (Rect rect, Rect[] parts, float spacing) {
 			var fullSpacing = spacing * (parts.Length - 1);
 			var width = (rect.width - fullSpacing) / parts.Length;
