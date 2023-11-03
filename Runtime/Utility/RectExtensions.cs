@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Zenvin {
+namespace Zenvin.EditorUtil {
 	public static class RectExtensions {
 
 		/// <summary>
